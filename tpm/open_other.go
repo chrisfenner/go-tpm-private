@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/google/go-tpm/tpmutil"
+	"github.com/chrisfenner/go-tpm/tpmutil"
 )
 
 // OpenTPM opens a channel to the TPM at the given path. If the file is a

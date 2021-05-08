@@ -27,8 +27,8 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/google/go-tpm/tpm2"
-	"github.com/google/go-tpm/tpmutil"
+	"github.com/chrisfenner/go-tpm/tpm2"
+	"github.com/chrisfenner/go-tpm/tpmutil"
 )
 
 // Labels for use in key derivation or OAEP encryption.

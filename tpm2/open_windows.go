@@ -18,8 +18,8 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/google/go-tpm/tpmutil"
-	"github.com/google/go-tpm/tpmutil/tbs"
+	"github.com/chrisfenner/go-tpm/tpmutil"
+	"github.com/chrisfenner/go-tpm/tpmutil/tbs"
 )
 
 // OpenTPM opens a channel to the TPM.

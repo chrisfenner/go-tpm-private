@@ -17,7 +17,7 @@ package tpmutil
 import (
 	"io"
 
-	"github.com/google/go-tpm/tpmutil/tbs"
+	"github.com/chrisfenner/go-tpm/tpmutil/tbs"
 )
 
 // winTPMBuffer is a ReadWriteCloser to access the TPM in Windows.

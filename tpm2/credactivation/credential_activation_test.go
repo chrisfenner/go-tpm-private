@@ -22,7 +22,7 @@ import (
 	insecureRand "math/rand"
 	"testing"
 
-	"github.com/google/go-tpm/tpm2"
+	"github.com/chrisfenner/go-tpm/tpm2"
 )
 
 func mustDecodeBase64(in string, t *testing.T) []byte {

@@ -23,7 +23,7 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/google/go-tpm/tpm"
+	"github.com/chrisfenner/go-tpm/tpm"
 )
 
 func extendPcrAction() {

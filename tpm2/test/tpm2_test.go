@@ -31,7 +31,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/chrisfenner/go-tpm-tools/simulator"
+	"github.com/google/go-tpm-tools/simulator"
 	. "github.com/chrisfenner/go-tpm/tpm2"
 	"github.com/chrisfenner/go-tpm/tpmutil"
 )

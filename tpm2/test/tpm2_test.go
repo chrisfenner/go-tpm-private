@@ -1617,6 +1617,117 @@ func TestPolicyNV(t *testing.T) {
 	}
 }
 
+// nvWrittenPolicy uses a trial session in the TPM to help calculate an NVWritten policy.
+func nvWrittenPolicy(t *testing.T, rw io.ReadWriter, written bool) []byte {
+	t.Helper()
+	sessHandle, _, err := StartAuthSession(rw, HandleNull, HandleNull, make([]byte, 16), nil, SessionTrial, AlgNull, AlgSHA256)
+	if err != nil {
+		t.Fatalf("could not start policy session: %v", err)
+	}
+	defer FlushContext(rw, sessHandle)
+
+	err = PolicyNVWritten(rw, sessHandle, written)
+	if err != nil {
+		t.Fatalf("error calling PolicyNVWritten: %v", err)
+	}
+
+	digest, err := PolicyGetDigest(rw, sessHandle)
+	if err != nil {
+		t.Fatalf("could not get policy digest: %v", err)
+	}
+
+	return digest
+}
+
+// defineSpaceWithWrittenPolicy defines an NV index with an NVWritten-related policy.
+func defineSpaceWithWrittenPolicy(t *testing.T, rw io.ReadWriter, written bool) {
+	t.Helper()
+	// Undefine the space if it already exists
+	nvUndefine(rw)
+
+	policy := nvWrittenPolicy(t, rw, written)
+
+	template := NVPublic{
+		NVIndex:    nvIdx,
+		NameAlg:    AlgSHA256,
+		Attributes: AttrAuthWrite | AttrPolicyWrite | AttrAuthRead | AttrOwnerRead,
+		AuthPolicy: policy,
+		DataSize:   4,
+	}
+	auth := AuthCommand{
+		Session:    HandlePasswordSession,
+		Attributes: AttrContinueSession,
+		Auth:       EmptyAuth,
+	}
+	if err := NVDefineSpaceEx(
+		rw,
+		HandleOwner,
+		emptyPassword,
+		template,
+		auth); err != nil {
+		t.Fatalf("could not define NV index: %v", err)
+	}
+}
+
+// useWrittenPolicyToWrite attempts to use an NVWritten policy to write an index.
+func useWrittenPolicyToWrite(t *testing.T, rw io.ReadWriter, written, expectSuccess bool) {
+	t.Helper()
+	sessHandle, _, err := StartAuthSession(rw, HandleNull, HandleNull, make([]byte, 16), nil, SessionPolicy, AlgNull, AlgSHA256)
+	if err != nil {
+		t.Fatalf("could not start policy session: %v", err)
+	}
+	defer FlushContext(rw, sessHandle)
+
+	err = PolicyNVWritten(rw, sessHandle, written)
+	if err != nil {
+		t.Fatalf("error in PolicyNVWritten: %v", err)
+	}
+
+	auth := AuthCommand{
+		Session:    sessHandle,
+		Attributes: AttrContinueSession,
+		Auth:       EmptyAuth,
+	}
+	data := []byte{1, 2, 3, 4}
+	if err := NVWriteEx(rw, nvIdx, nvIdx, auth, data, 0); expectSuccess && err != nil {
+		t.Errorf("Could not write NV index with policy: %v", err)
+	} else if sessErr, ok := err.(SessionError); !expectSuccess && (!ok || sessErr.Code != RCPolicyFail) {
+		t.Errorf("Expected RCPolicyFail, got %v (%v)", err, reflect.TypeOf(err))
+	}
+}
+
+func TestPolicyNVWrittenSet(t *testing.T) {
+	rw := openTPM(t)
+	defer rw.Close()
+
+	// Define an index whose policy is PolicyNVWritten(SET)
+	// This means it can only be written by policy if nvWritten is already true.
+	defineSpaceWithWrittenPolicy(t, rw, true)
+	defer nvUndefine(rw)
+
+	// Check that the index cannot be written by policy, until being written once (with auth).
+	useWrittenPolicyToWrite(t, rw, true, false)
+	err := NVWrite(rw, nvIdx, nvIdx, emptyPassword, []byte{1, 2, 3, 4}, 0)
+	if err != nil {
+		t.Fatalf("could not use auth to write: %v", err)
+	}
+	useWrittenPolicyToWrite(t, rw, true, true)
+}
+
+func TestPolicyNVWrittenClear(t *testing.T) {
+	rw := openTPM(t)
+	defer rw.Close()
+
+	// Define an index whose policy is PolicyNVWritten(CLEAR)
+	// This means it can only be written by policy if nvWritten is not already true.
+	defineSpaceWithWrittenPolicy(t, rw, false)
+	defer nvUndefine(rw)
+
+	// Check that the index cannot be written by policy, after being written once.
+	useWrittenPolicyToWrite(t, rw, false, true)
+	useWrittenPolicyToWrite(t, rw, false, false)
+}
+
 func TestPolicySecret(t *testing.T) {
 	rw := openTPM(t)
 	defer rw.Close()

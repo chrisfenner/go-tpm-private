@@ -495,6 +495,7 @@ const (
 	CmdHashSequenceStart          tpmutil.Command = 0x00000186
 	CmdPolicyGetDigest            tpmutil.Command = 0x00000189
 	CmdPolicyPassword             tpmutil.Command = 0x0000018C
+	CmdPolicyNVWritten            tpmutil.Command = 0x0000018F
 	CmdEncryptDecrypt2            tpmutil.Command = 0x00000193
 )
 

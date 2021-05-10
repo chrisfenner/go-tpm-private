@@ -1483,6 +1483,16 @@ func PolicyNV(rw io.ReadWriter, auth, index, session tpmutil.Handle, password st
 	return err
 }
 
+// PolicyNVWritten asserts the nvWritten attribute of an NV index.
+func PolicyNVWritten(rw io.ReadWriter, session tpmutil.Handle, written bool) error {
+	writtenSet := uint8(0)
+	if written {
+		writtenSet = 1
+	}
+	_, err := runCommand(rw, TagNoSessions, CmdPolicyNVWritten, session, writtenSet)
+	return err
+}
+
 // decodeHash unpacks a successful response to TPM2_Hash, returning the computed digest and
 // validation ticket.
 func decodeHash(resp []byte) ([]byte, *Ticket, error) {
